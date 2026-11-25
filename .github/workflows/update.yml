@@ -2,6 +2,7 @@ name: update-news
 on:
   schedule:
     - cron: "30 23 * * *"   # 매일 한국시간 08:30
+    - cron: "30 7 * * *"    # 한국시간 16시 30분
   workflow_dispatch:
 permissions:
   contents: write
