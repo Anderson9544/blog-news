@@ -1,7 +1,8 @@
-import datetime, html, urllib.parse
+import datetime, html, re, urllib.parse
 import feedparser
 
-QUERIES = ['intitle:"네이버 블로그"', "네이버 검색", "티스토리", "다음 포털", "구글 검색", "애드포스트", "구글 블로그 스팟", "애드센스", "데이블", "카카오", "애드핏", "AIO", "AEO", "GEO", "구글 블로그", "검색 엔진", "워드프레스", "빙 검색"]
+NORMAL = ["네이버 검색", "검색 엔진", "구글 검색", "다음 포털", "티스토리", "빙 검색", "애드포스트", "구글 블로그 스팟", "애드센스", "데이블", "카카오", "애드핏", "AIO", "AEO", "GEO", "구글 블로그", "워드프레스"]   # 일반 검색 (기사 어디든 포함)
+STRICT = ["네이버 블로그"]                    # 제목 맨 앞에 있는 기사만
 MAX_PER_QUERY = 5
 
 def feed_url(q):
@@ -9,10 +10,20 @@ def feed_url(q):
             + urllib.parse.quote(q + " when:1d")
             + "&hl=ko&gl=KR&ceid=KR:ko")
 
+# 제목 앞의 [단독], (종합) 같은 말머리 제거용
+TAG = re.compile(r'^(\s*[\[\(<「『][^\]\)>」』]*[\]\)>」』])+\s*')
+
+jobs = [(k, False) for k in NORMAL] + [(k, True) for k in STRICT]
+
 seen, sections = set(), []
-for q in QUERIES:
+for kw, strict in jobs:
+    q = f'intitle:"{kw}"' if strict else f'"{kw}"'
     items = []
     for e in feedparser.parse(feed_url(q)).entries:
+        if strict:
+            title = TAG.sub("", e.title)
+            if not title.lower().startswith(kw.lower()):
+                continue
         if e.link in seen:
             continue
         seen.add(e.link)
@@ -20,7 +31,7 @@ for q in QUERIES:
         if len(items) >= MAX_PER_QUERY:
             break
     if items:
-        sections.append(f"<h2>{html.escape(q)}</h2><ul>{''.join(items)}</ul>")
+        sections.append(f"<h2>{html.escape(kw)}</h2><ul>{''.join(items)}</ul>")
 
 kst = datetime.timezone(datetime.timedelta(hours=9))
 today = datetime.datetime.now(kst).strftime("%Y-%m-%d")
