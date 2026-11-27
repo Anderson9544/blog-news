@@ -27,7 +27,7 @@ for kw, strict in jobs:
         if e.link in seen:
             continue
         seen.add(e.link)
-        items.append(f'<li><a href="{html.escape(e.link)}">{html.escape(e.title)}</a></li>')
+        items.append(f'<li><a href="{html.escape(e.link)}" target="_blank" rel="noopener noreferrer">{html.escape(e.title)}</a></li>')
         if len(items) >= MAX_PER_QUERY:
             break
     if items:
